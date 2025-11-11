@@ -1,0 +1,17 @@
+name: rd-nas-env
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pytorch=1.9.0
+  - torchvision=0.10.0
+  - numpy
+  - scikit-learn
+  - pip
+  - pip:
+    - nats_bench==0.1.6
+    - nas-bench-201
+    - tqdm
+    - tensorboard
