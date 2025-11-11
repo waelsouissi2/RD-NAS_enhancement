@@ -1,0 +1,13 @@
+# Fichiers Python compilés
+*.pyc
+
+# Logs et résultats
+logs/
+results/
+data/
+
+# Environnements virtuels
+venv/
+.venv/
+
+
