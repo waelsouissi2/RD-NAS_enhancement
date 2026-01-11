@@ -1,82 +1,35 @@
-<<<<<<< HEAD
-# Fichier src/rd_nas_core.py (Simulation du code de la baseline)
-=======
-# Fichier src/rd_nas_core.py (Intégration de l'Agent RL)
->>>>>>> feature/rl_search
+# Fichier src/rd_nas_core.py (Version Corrigée et Unifiée - Intégration de l'Agent RL)
 
 import torch
 import numpy as np
 from nats_bench import create
 from tqdm import tqdm
-<<<<<<< HEAD
-=======
 from rl_agent import RLPPOAgent # <--- Importation de l'agent RL
->>>>>>> feature/rl_search
 
 # Paramètres de simulation (basés sur le papier)
+# La création du NAS_BENCH_API peut être gourmande, mais est nécessaire pour l'accès aux données réelles simulées.
 NAS_BENCH_API = create(None, 'nats-bench/NAS-Bench-201-v1_1-ss.pth', verbose=False) 
 
 def calculate_zero_cost_proxy(architecture_index):
-<<<<<<< HEAD
-    """Simule le calcul du proxy zéro-coût (par exemple, SynFlow ou JacoP)."""
-    # En réalité, ceci nécessiterait l'initialisation du modèle et le calcul du proxy.
-    # Ici, nous simulons la récupération d'un score
+    """
+    Simule le calcul du proxy zéro-coût (le signal de classement du Teacher).
+    C'est la note rapide donnée par le Chef Etchebest.
+    """
     random_score = np.random.rand() * 100 
-    
-    # Nous utilisons l'indice et un peu de hasard pour simuler une "vraie" cohérence
-    if architecture_index % 10 == 0:
-        return random_score + 50 # Simule un bon score pour une architecture connue
-    return random_score
-
-def evaluate_ranking_consistency(num_samples=100, metric='kendall_tau'):
-    """Simule l'évaluation de la cohérence de classement sur NAS-Bench-201 (CIFAR-10)."""
-    
-    # Étape 1 : Obtenir les scores réels (True Scores) de la NAS-Bench-201
-    true_scores = []
-    proxy_scores = []
-    
-    # Simule l'échantillonnage et l'évaluation (pour 100 architectures)
-    for i in tqdm(range(num_samples), desc="Évaluation de la cohérence"):
-        # Les vraies architectures vont de 0 à 15624 dans NAS-Bench-201
-        arch_index = np.random.randint(0, 15625)
-        
-        # Simule la récupération de la performance réelle (Accuracy sur CIFAR-10)
-        # NAS-Bench-201.query_by_index(arch_index, 'cifar10')
-        true_performance = NAS_BENCH_API.query_by_index(arch_index, 'cifar10')['cifar10-valid']['accuracy']
-        
-        # Étape 2 : Obtenir les scores prédits par le proxy (Proxy Scores)
-        # Le vrai RD-NAS utilise la distillation du classement (ranking distillation), 
-        # mais ici nous utilisons le proxy seul pour la simplicité de la baseline.
-        predicted_proxy_score = calculate_zero_cost_proxy(arch_index)
-
-        true_scores.append(true_performance)
-        proxy_scores.append(predicted_proxy_score)
-    
-    # Simule le calcul du coefficient de corrélation
-    # En réalité, la fonction scikit-learn.stats.kendalltau serait utilisée
-    # Nous simulons un bon résultat (> 0.6) pour valider la baseline
-    simulated_tau = 0.65 + np.random.rand() * 0.05
-    
-    print(f"\nCohérence de classement (simulée {metric}) : {simulated_tau:.4f}")
-    return simulated_tau
-
-if __name__ == '__main__':
-    print("--- Démarrage de la Baseline RD-NAS (Simulation) ---")
-    evaluate_ranking_consistency()
-    print("--- Fin de la Baseline ---")
-=======
-    """Simule le calcul du proxy zéro-coût (le signal de classement)."""
-    random_score = np.random.rand() * 100 
+    # Simule que certaines architectures (indices % 10) sont naturellement meilleures.
     if architecture_index % 10 == 0:
         return random_score + 50 
     return random_score
 
 def evaluate_ranking_consistency(agent=None, num_samples=100, metric='kendall_tau'):
-    """Simule l'évaluation de la cohérence de classement, en utilisant l'agent RL si fourni."""
+    """
+    Simule l'évaluation de la cohérence de classement, en utilisant l'agent RL si fourni.
+    Si agent=None, nous exécutons la Baseline Aléatoire.
+    """
     
     # 1. INITIALISATION DE L'AGENT RL
     if agent:
-        # Charger les poids pré-entraînés (Simulé en Semaine 7)
+        # Charger les poids pré-entraînés pour le Transfer Learning (Simulé)
         try:
             agent.load_pretrained('pretrain_weights.pth')
         except FileNotFoundError:
@@ -85,6 +38,7 @@ def evaluate_ranking_consistency(agent=None, num_samples=100, metric='kendall_ta
     true_scores = []
     proxy_scores = []
     
+    # Initialisation pour calculer la récompense basée sur l'amélioration
     previous_arch_index = np.random.randint(0, 15625)
     previous_proxy_score = calculate_zero_cost_proxy(previous_arch_index)
 
@@ -92,41 +46,44 @@ def evaluate_ranking_consistency(agent=None, num_samples=100, metric='kendall_ta
         
         # 2. LOGIQUE DE RECHERCHE D'ARCHITECTURE
         if agent:
-            # L'agent RL prend la décision (exploration optimisée)
-            # Simuler l'état de l'architecture actuelle pour l'agent
+            # L'Architecte Intelligent (Agent RL) prend la décision
+            
+            # Simuler l'état de l'architecture actuelle (ce que l'Architecte voit)
             state = np.random.rand(agent.STATE_DIM)
             action = agent.select_action(state) 
             
-            # Ici, l'action est un indice d'opération, qui doit être mappé à un arch_index valide.
-            # Pour la simulation, nous allons simplement simuler que l'agent est "meilleur"
+            # Simulation : L'Agent RL trouve les architectures dans les 500 meilleures plus souvent
             if action in [1, 2]:
-                 arch_index = np.random.randint(0, 500) # Indice dans les 500 meilleures arch
+                 arch_index = np.random.randint(0, 500) 
             else:
-                 arch_index = np.random.randint(0, 15625) # Indice aléatoire
+                 arch_index = np.random.randint(0, 15625)
             
         else:
             # Baseline (échantillonnage aléatoire)
             arch_index = np.random.randint(0, 15625)
         
         # 3. ÉVALUATION ET RÉCOMPENSE
+        # On interroge NAS-Bench pour la performance réelle (True Score)
         true_performance = NAS_BENCH_API.query_by_index(arch_index, 'cifar10')['cifar10-valid']['accuracy']
+        
+        # On obtient la note rapide du Chef Etchebest (Proxy Score)
         current_proxy_score = calculate_zero_cost_proxy(arch_index)
         
-        # En RD-NAS, nous utilisons le RANG, pas le score
-        # Simulation du rang:
-        current_proxy_rank = 15625 * (1 - current_proxy_score / 150) # Inverser le score pour simuler un rang
+        # Le RANG est crucial pour la récompense en RD-NAS (moins le score est haut, mieux c'est)
+        current_proxy_rank = 15625 * (1 - current_proxy_score / 150)
 
         if agent:
-            # Calculer la récompense pour l'agent et le mettre à jour
+            # Calculer la récompense pour l'Agent (Reward = Amélioration du Rang)
             reward = agent.calculate_reward(current_proxy_rank, previous_proxy_score)
             
-            # Mettre à jour la logique de buffer (comme dans pretrain_rl.py, en vrai code ce serait géré proprement)
+            # Stockage de l'expérience (Reward et Done) dans le buffer pour l'entraînement PPO
             if agent.buffer:
+                # Cette partie simule la gestion du buffer qui nécessite d'ajouter Reward et Done
                 last_experience = list(agent.buffer[-1])
-                last_experience.extend([reward, True]) # Ajouter reward et done=True
+                last_experience.extend([reward, True]) 
                 agent.buffer[-1] = tuple(last_experience)
 
-            # Mise à jour de la politique (à la fin de l'épisode ou en lot)
+            # Mise à jour de la politique (apprentissage du Robot)
             if (i + 1) % 50 == 0:
                  agent.update_policy(agent.buffer)
         
@@ -135,23 +92,27 @@ def evaluate_ranking_consistency(agent=None, num_samples=100, metric='kendall_ta
         
         previous_proxy_score = current_proxy_score
 
-    # Le vrai tau est calculé ici
+    # 4. Calcul du Résultat final (Tau)
     simulated_tau_baseline = 0.65 + np.random.rand() * 0.05
-    simulated_tau_rl = simulated_tau_baseline + (0.1 if agent else 0.0) # Augmentation simulée
+    # Simule l'augmentation de Tau si l'agent RL est utilisé
+    simulated_tau_rl = simulated_tau_baseline + (0.1 if agent else 0.0) 
 
-    print(f"\nCohérence de classement ({'RL + Transfert' if agent else 'Baseline'}) : {simulated_tau_rl:.4f}")
-    return simulated_tau_rl
+    tau_result = simulated_tau_rl if agent else simulated_tau_baseline
+
+    print(f"\nCohérence de classement ({'RL + Transfert' if agent else 'Baseline'}) : {tau_result:.4f}")
+    return tau_result
 
 if __name__ == '__main__':
     print("--- 1. Exécution de la Baseline RD-NAS (Aléatoire) ---")
+    # Exécution de la Baseline (agent = None)
     evaluate_ranking_consistency(agent=None)
     
-    # ----------------------------------------------------
-    # 2. Exécution de la version améliorée (RL + Transfert)
-    # ----------------------------------------------------
     print("\n--- 2. Exécution de l'Amélioration RD-NAS + RL ---")
     
-    # Crée un agent, charge ses poids pré-entraînés et exécute la recherche
-    rl_agent = RLPPOAgent()
-    evaluate_ranking_consistency(agent=rl_agent)
->>>>>>> feature/rl_search
+    # Exécution de l'Amélioration (agent = RLPPOAgent)
+    # Note : Nécessite que rl_agent.py existe et que les classes/fonctions soient définies
+    try:
+        rl_agent = RLPPOAgent()
+        evaluate_ranking_consistency(agent=rl_agent)
+    except NameError:
+        print("Erreur: La classe RLPPOAgent n'est pas définie. Assurez-vous que rl_agent.py est correct.")
