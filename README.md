@@ -62,3 +62,18 @@ Le fichier run_experiments.py prouve l'efficacité de l'approche :
     Pré-entraînement : python src/pretrain_rl.py (Génère l'intelligence de base).
 
     Expérience complète : python src/run_experiments.py (Lance la recherche et compare les résultats).
+⚠️ Dépendance Critique : Le Benchmark Tabulaire (NAS-Bench-201)
+
+Ce projet ne peut pas fonctionner "à vide". Il repose sur une base de données de recherche appelée NAS-Bench-201.
+
+    Pourquoi est-ce indispensable ? : Dans un projet NAS classique, il faudrait entraîner chaque IA créée pendant des heures sur des serveurs (GPU). Pour éviter cela, nous utilisons un Benchmark Tabulaire. C'est une immense "Lookup Table" (table de correspondance) qui contient les performances réelles de 15 625 architectures déjà pré-calculées par des chercheurs.
+
+    Le Fichier Oracle : Sans le fichier NAS-Bench-201-v1_1-ss.pth, l'agent ne peut pas obtenir sa récompense (Reward) et ne peut donc pas apprendre.
+
+Comment l'installer :
+
+    Créez un dossier nommé nats-bench/ à la racine du projet.
+
+    Placez-y le fichier NAS-Bench-201-v1_1-ss.pth.
+
+    Le code chargera automatiquement cette base de données comme un "Oracle" pour valider les décisions de l'agent RL.
